@@ -7,19 +7,109 @@
   title: "Article Title"
   description: "Description of the post"
   authors:
-  - Chris Olah: http://colah.github.io
-  - Shan Carter: http://shancarter.com
+  - Sholto Douglas: http://sholtodouglas.github.io
   affiliations:
-  - Google Brain: http://g.co/brain
-  - Google Brain: http://g.co/brain
+  - Sydney University: http://g.co/brain
 </script>
 
 <dt-article>
-  <h1>Hello World</h1>
-  <h2>A description of the article</h2>
+  <h1>Linearised State Representations for Reinforcement Learning</h1>
+  <!-- <h2>A description of the article</h2> -->
   <dt-byline></dt-byline>
-  <p>This is the first paragraph of the article.</p>
-  <p>We can also cite <dt-cite key="gregor2015draw"></dt-cite> external publications.</p>
+  <p>Recently I found a way to learn state representations such that linear interpolation between the latent
+     representations of states provided near optimal trajectories between the states in the original 
+     set of dimensions. The hard problem of finding the best path between states is reduced to the simple problem of taking a straight line between the latent representations of states - and the complexity is wrapped in the mapping to and from the latent space. This even worked for image based object manipulation tasks, and might be 
+     an interesting way to approach sub-goal generation for temporally extended manipulation tasks
+     or provide a dense reward metric where latent Euclidean distance is a ‘true’ measure of progress
+      towards the goal state. </p>
+
+  <p> This is currently just a curiosity because I haven’t shown improvements on the downstream results in manipulation tasks of SOTA approaches. However, I thought it might be of interest that the latent space can be 
+    structured in this way. 
+
+     <p> If this terminology is familiar, skip to the next section where I’ll outline current
+        work on state representation learning and how this fits in. Otherwise, lets get some grounding. </p>
+        <hr>
+      <h2> What is State Representation learning?</h2>
+  
+
+      <p> A state is a vector where each dimension describes one aspect of the scene. In the 
+        example of robotic manipulation, the state could be made up of the positions, velocities 
+        and orientations of the gripper and the relevant objects – simple manipulation problems 
+        can be defined in under 20 dimensions. Modern reinforcement learning algorithms quickly 
+        begin to struggle as the dimension of problems increases – and this problem is exacerbated 
+        when working from images, which are effectively comprised of hundreds of thousands of 
+        dimensions. </p>
+
+        <p> Representations are transformations of the input data which make it easier to solve
+           downstream tasks. For example, the compressed representations output by the later layers
+            of CNNs summarize the high level features of an image. The representations learnt by
+             supervised learning on image classification tasks are excellent for transfer learning
+              to other similar tasks, but of limited use for robotic manipulation which
+               requires different information such as the spatial relationship between objects.
+                These requirements led to adjustments like the spatial softmax  <dt-cite key="end2end"></dt-cite>, which 
+                forces the representation to retain spatial information.  </p> 
+                <p> State representation learning is the study of explicitly engineering representations useful for control of the state in tasks like manipulation. </p>
+                <hr>
+                <h2> Themes in the Research</h2>
+  
+
+      <p> The first theme is to use the distance between the latent representations of states as a better reward function for reinforcement learning or loss function for imitation learning. This avoids the difficulty of hand designing complex and failure prone dense reward functions, and allows for a better similarity metric between frames. Srinivas et al <dt-cite key="UPN"></dt-cite>learn representations useful for planning and imitating a set of expert 
+        demonstrations while Ghosh et al  <dt-cite key="Ghosh"></dt-cite> use the difference in the actions used to reach 
+        states with a pretrained policy as a proxy for distance between states. Both approaches learn a representation for states which enables faster learning of new policies. Sermanet et al   <dt-cite key="Sermanet"></dt-cite> 
+         use contrastive losses to build viewpoint invariant representations by drawing frames from
+          the same timestep but different viewpoints together. This worked excellently as a
+           distance measure for imitation learning. All these approaches require either a selection of expert trajectories, or a pretrained goal 
+            conditioned policy. </p>
+
+        <p> The second theme is to use the latent space to make it easier to plan trajectories to
+           reach goal states. This is because it is faster and easier to simulate or optimize in the lower dimensional
+            latent space than the original image space – allowing effective sub-goal generation 
+            <dt-cite key="NAIR"></dt-cite>, trajectory optimisation via Model Predictive Control 
+            <dt-cite key="Ke2019"></dt-cite> or training of RL agents on simulated data <dt-cite key="ha2018worldmodels"></dt-cite>. A particularly interesting paper by Watter et al <dt-cite key="Embed2control"></dt-cite> structure the latent
+             space so that successive states are a linear function of the current state and action, which allows the use of trajectory optimisation algorithms from optimal 
+             control such as LQR to be used. All of the above approaches are relatively computationally intensive, requiring significant simulation of many possible trajectories or reasonably complex optimisation in the latent space – but they can all
+               be learnt in a fully self supervised way from any transitions. </p>
+
+<p> I wondered if it would be possible to structure the state representations so that finding 
+  the best trajectory between two states was the easiest possible problem – that of taking a straight
+   line between their latent representations. This would make it far less computationally 
+   intensive to find sub-goals for long horizon manipulation tasks and also function as a distance metric which uses progress towards the goal as a proxy for distance between states - which could be a better proxy than the others studied.  </p>
+   
+  <p> I thought it might be possible
+     to force points along expert trajectories to lie along lines in latent space if the dimension was higher than the
+      intrinsic dimension of the state (the minimum number of dimensions required to represent 
+      the state), based on the fact that SVMs are able to find linearly separable boundaries 
+      between points when transformed to higher dimensions using the kernel trick. The higher
+       dimension isn’t an issue when working with images as the difference between latent vector
+        sizes in marginal. As it turns out, this was already a familiar concept in control theory called the 'Koopman Operator'. Lusch et al <dt-cite key="Lusch2019DeepDynamics"></dt-cite> use a very similar approach to model nonlinear systems linearly by mapping states to a higher dimensional representations which are eigenvectors of a learnt transition operator K. Recall that the multiplication of an matrix by it's eigenvector gives a scalar mutliple of the eigenvector, and so all states of a system vary along a straight line in latent space.   </p>
+
+        <hr>
+        <h2> Method</h2>
+
+   
+
+      <p> Take two random frames from an expert trajectory as a start (s<sub>i</sub>) and end state (s<sub>g</sub>),  
+        and encode into latent variables (z<sub>i</sub>, z<sub>g</sub>) with a network that functions as the encoder 
+        of a VAE.  Sample the frames between them and interpolate between (z<sub>i</sub>, z<sub>g</sub>) proportionately
+         to the number of timesteps away each frame is. Using another network as a decoder of the VAE,
+          decode these interpolated variables and compare the reconstruction loss with the sampled 
+          intermediate frames. 
+        In this way, the VAE learns to jointly encode/reconstruct and enforce that the points lie
+         along the interpolated path in latent space with a single loss term. Earlier, when I tried a
+          separate reconstruction loss and a linearization loss (taking the distance between the encoded
+           latent variables of frames along a trajectory to the line between z<sub>i</sub>, z<sub>g</sub>), it failed to 
+           work because balancing the weightings of reconstruction and linearization loss was extremely 
+           difficult. 
+        </p>
+
+        <p>To use it to plan trajectories, simply encode the start and end goal, interpolate between 
+          them and decode along the path. To use it as a reward function, simply encode and take the 
+          L2 distance between frames. 
+          In order to get it to work with images, I had to use content loss in addition to pixelwise 
+          loss as the reconstruction loss.
+          </p>
+        
+
 </dt-article>
 
 <dt-appendix>
@@ -33,5 +123,96 @@
     year={2015},
     url={https://arxiv.org/pdf/1502.04623.pdf}
   }
+
+  @article{end2end,
+    title={End-to-End Training of Deep Visuomotor Policies},
+    author={Levine, Sergey and Finn, Chelsea and Darrell Trevor and Pieter Abbeel},
+    journal={Journal of Machine Learning Research},
+    year={2016},
+    url={https://arxiv.org/pdf/1504.00702.pdf}
+  }
+
+  @article{UPN,
+    title={Universal Planning Networks},
+    author={Srinivas, Aravind  and  Jabri ,Allan and  Abbeel , Pieter and Levine, Sergey and  Finn, Chelsea},
+    journal={Proceedings of the 35 th International Conference on Machine
+      Learning},
+    year={2018},
+    url={http://proceedings.mlr.press/v80/srinivas18b/srinivas18b.pdf}
+  }
+
+  @article{Ghosh,
+    title = {Learning Actionable Representations with Goal-Conditioned Policies},
+    year = {2019},
+    journal = {International Conference on Learning Representations},
+    author = {Ghosh, Dibya and Gupta, Abhishek and Levine, Sergey},
+    url = {https://arxiv.org/pdf/1811.07819.pdf}
+}
+
+@inproceedings{Sermanet,
+  title = {Time-Contrastive Networks: Self-Supervised Learning from Multi-View Observation},
+  year = {2017},
+  booktitle = {The Conference on Computer Vision and Pattern Recognition 2017, CVPR},
+  author = {Sermanet, Pierre and Lynch, Corey and Hsu, Jasmine and Levine, Sergey and Brain, Google},
+  url = {https://arxiv.org/pdf/1704.06888v1.pdf},
+  arxivId = {1704.06888v1}
+}
+
+@inproceedings{NAIR,
+  title = {Hierarchical Foresight: Self-Supervised Learning of Long-Horizon Tasks via Visual Subgoal Generation},
+  year = {2019},
+  booktitle = {International Conference on Learning Representations, 2020 (Poster)},
+  author = {Nair, Suraj and Finn, Chelsea},
+  url = {https://arxiv.org/pdf/1909.05829.pdf},
+}
+  
+
+@inproceedings{Ke2019,
+  title = {Learning Dynamics Model in Reinforcement Learning by Incorporating the Long Term Future},
+  year = {2019},
+  booktitle = {ICLR},
+  author = {Ke, Nan Rosemary and Singh, Amanpreet and Touati, Ahmed and Goyal, Anirudh and Bengio, Yoshua and Parikh, Devi and Batra, Dhruv},
+  url = {http://arxiv.org/abs/1903.01599},
+  arxivId = {1903.01599}
+}
+
+
+@inproceedings{Embed2control,
+  title = {Embed to Control: A Locally Linear Latent
+    Dynamics Model for Control from Raw Images},
+  year = {2015},
+  booktitle = {Neural Information Processing Systems},
+  author = {Watter, Manuel and Springenberg, Jost Tobias and Boedecker, Joschka and Riedmiller, Martin},
+  url = {https://arxiv.org/abs/1506.07365}
+}
+
+
+@incollection{ha2018worldmodels,
+  title = {Recurrent World Models Facilitate Policy Evolution},
+  author = {Ha, David and Schmidhuber, J{\"u}rgen},
+  booktitle = {Advances in Neural Information Processing Systems 31},
+  pages = {2451--2463},
+  year = {2018},
+  publisher = {Curran Associates, Inc.},
+  url = {https://papers.nips.cc/paper/7512-recurrent-world-models-facilitate-policy-evolution},
+  note = "\url{https://worldmodels.github.io}",
+}
+
+@article{Lusch2019DeepDynamics,
+  title = {Deep learning for universal linear embeddings of nonlinear dynamics},
+  year = {2019},
+  journal = {Nature},
+  author = {Lusch, Bethany and Nathan Kutz, J and Brunton, Steven L},
+  url = {www.nature.com/naturecommunications},
+  doi = {10.1038/s41467-018-07210-0}
+}
+
 </script>
 </html>
+
+Additionally,  it could be 
+    applied to image based domains – where a large amount of sequences/videos are available of tasks
+     being performed – and thus provide pretrained representations which could be used for transfer 
+     learning (as word representations are used to accelerate downstream tasks in NLP).</p>
+and inspire some thoughts as to whether this is possible without supervision 
+    (e.g the sukbahtar one I think is close) (Mention dibya paper 2). 
