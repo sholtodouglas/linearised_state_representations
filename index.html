@@ -46,7 +46,7 @@
   
   <p>Recently I found a way to learn state representations such that linear interpolation between the latent
      representations of states provided near optimal trajectories between the states in the original 
-     set of dimensions by optimising the latent representations of expert trajectories to lie alone lines. The hard problem of finding the best path between states is reduced to the simple problem of taking a straight line between the latent representations of states - and the complexity is wrapped in the mapping to and from the latent space. This even worked for image based object manipulation tasks, and might be 
+     set of dimensions. They are learnt by optimising the representations of expert trajectories to lie along lines in latent space. The hard problem of finding the best path between states is reduced to the simple problem of taking a straight line between the latent representations of states - and the complexity is wrapped in the mapping to and from the latent space. This even worked for image based object manipulation tasks, and might be 
      an interesting way to approach sub-goal generation for temporally extended manipulation tasks
      or provide a dense reward metric where latent Euclidean distance is a ‘true’ measure of progress
       towards the goal state. </p>
@@ -59,9 +59,9 @@
       </figure>
        
 
-
+      <img src="images/hallucination.png" alt="hi" height="150%" class="center"/>
       <figure>
-        <img src="images/hallucination.png" alt="hi" height="150%" class="center"/>
+       
          <figcaption> <b> Image space trajectory hallucinated for two camera angles from the interpolated trajectory in latent space for an RLBench Task <dt-cite key="James2019RLBench"></dt-cite> . </b></figcaption>
        </figure>
       
