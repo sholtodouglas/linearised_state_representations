@@ -62,7 +62,7 @@
 
       <figure>
         <img src="images/hallucination.png" alt="hi" height="150%" class="center"/>
-         <figcaption> <b> Image space trajectory hallucinated for two camera angles from the interpolated trajectory in latent space for an RLBench Task. </b></figcaption>
+         <figcaption> <b> Image space trajectory hallucinated for two camera angles from the interpolated trajectory in latent space for an RLBench Task <dt-cite key="James2019RLBench"></dt-cite> . </b></figcaption>
        </figure>
       
       </div>
@@ -70,8 +70,8 @@
       
 
 
-  <p> This is currently just a curiosity because whilst it does hallucinate visually superb sub-goals and trajectories, and display attractive properties as a reward function - when used on downstream tasks they are capable of finding local minima to exploit instead of solving the task. However, I thought it might be of interest that the latent space can be 
-    structured in this way. 
+  <p> Whilst it does display attractive properties as a reward function and hallucinate visually superb sub-goals and trajectories, when used on downstream tasks agents are capable of finding local minima to exploit instead of solving the task. However, I thought it might be of interest that the latent space can be 
+    structured in this way - whether as the inspiration for future work, a sign not to pursue this path or just as a curiosity!
 
      <p> If this terminology is familiar, skip to the next section where I’ll outline current
         work on state representation learning and how this fits in. Otherwise, lets get some background. </p>
@@ -149,13 +149,24 @@
            <figcaption> <b> Training of the VAE using an expert trajectory from the point mass task.  </b></figcaption>
          </figure>
          </div>
+
+         <img src="images/short_states_seq.png" alt="hi" class="center"/>
+         <div class="fake-img l-body">
+          
+         <figure width="300px">
+           <figcaption> <b> Interpolation between latent transformations mapped back to state space showing a valid trajectory. </b></figcaption>
+         </figure>
+         </div>
+
         <p>
          
+         
+
          Earlier, when I tried a
           separate reconstruction loss and a linearization loss by taking the distance between the encoded
            latent variables of frames along a trajectory to the line between z<sub>i</sub>, z<sub>g</sub>, it failed to 
            work because balancing the weightings of reconstruction and linearization loss was extremely 
-           difficult. 
+           difficult. Additionally, in order to get it to work on images, content loss had to be used <dt-cite key="Hou2016DeepAutoencoder"></dt-cite>. 
         </p>
 
         <p>To use it to plan trajectories, simply encode the start and end goal, interpolate between 
@@ -171,7 +182,7 @@
         <h3>Multi-task Embeddings</h3>
         <p>Like all the methods from the first theme of research, this method does not learn exlcusively from the transitions experienced during a policy's random exploration and requires a degree of supervision. As a result, it would be most useful if it could be pretrained on large datasets of video of various tasks being completed (which is much easier to collect and generalize than teleoperation data) - and then used as a baseline embedding which could be transfer learned to new tasks with a handful of task specific demonstrations. 
 
-          As an inital test of this, the same model was trained on 3 tasks from RLBench, the dish placement, oven opening and BBQ grilling tasks. Each tasks has 3 viewpoints, the left and right shoulder cameras and the gripper camera. The model achieves some amount of success here, clearly hallcuinating reasonable intermediate frames for use as sub-goals inclduing the changing viewpoint of the gripper. </p>
+          As an inital test of this, the same model was trained on 3 tasks from RLBench <dt-cite key="James2019RLBench"></dt-cite> , the dish placement, oven opening and BBQ grilling tasks. Each tasks has 3 viewpoints, the left and right shoulder cameras and the gripper camera. The model achieves some amount of success here, clearly hallcuinating reasonable intermediate frames for use as sub-goals inclduing the changing viewpoint of the gripper. </p>
         
 
         
@@ -184,10 +195,26 @@
             appropriately.  </b></figcaption>
          </figure>
          </div>
-
     
         <h3> Comparison with the Latent Space of a Standard VAE</h3>
 
+       <p> To highlight the difference between the properties of the latent space constructed by a standard variational autoencoder and this one, observe the stark difference in interpolation between the following two images on the pointmass task.  With a standard variational autoencoder, the interpolation between the embeddings of two states does gradually change between the two images, but the interpolation is physically infeasible. By contrast, interpolation in a linear latent space shows a valid path between two new images.</p>
+        
+        <img src="images/bad_im_interp.png" alt="hi" class="center"/>
+        <div class="fake-img l-body">
+         
+         <figure width="300px">
+           <figcaption> <b>   A standard VAE trained on images, without linear structure in the latent space. Interpolation between the start and end state is physically infeasible and thus states which are close in the latent space do not correspond to progress. </b></figcaption>
+         </figure>
+         </div>
+
+         <img src="images/beaut_valid.png" alt="hi" class="center"/>
+        <div class="fake-img l-body">
+         
+         <figure width="300px">
+           <figcaption> <b>  Successful image based model with a linearised latent space. </b></figcaption>
+         </figure>
+         </div>
 
 
         <h3> Latent Distance as an Effective Reward Metric</h3>
@@ -265,6 +292,20 @@
              <figcaption> <b>                Reconstruction Loss for a range of latent dimensions exhibiting decreasing returns after the dimensions exceed the intrinsic dimension of 4 by two. </b></figcaption>
            </figure>
            </div>
+
+
+           <h2> Algorithm and Architecture Specifics</h2>
+
+           <p> Here is a more detailed breakdown of the training process. You can also find the (very messy) code here with architecture details. </p>
+
+           <img src="images/algo.png" alt="hi" class="center"/>
+          <div class="fake-img l-body">
+           
+           <figure width="300px">
+             
+           </figure>
+           </div>
+
 
 
         
@@ -377,6 +418,23 @@
   arxivId = {1710.11381v3}
 }
 
+@techreport{Hou2016DeepAutoencoder,
+  title = {Deep Feature Consistent Variational Autoencoder},
+  year = {2016},
+  author = {Hou, Xianxu and Shen, Linlin and Qiu, Guoping},
+  url = {https://arxiv.org/pdf/1610.00291.pdf},
+  isbn = {1610.00291v1},
+  arxivId = {1610.00291v1}
+}
+
+@misc{James2019RLBench,
+  title = {RLBench: The Robot Learning Benchmark &  Learning Environment},
+  year = {2019},
+  author = {James, Stephen and Ma, Zicong and Arrojo, David Rovick and Davison, Andrew J.},
+  publisher = {Imperial College},
+  url = {http://arxiv.org/abs/1909.12271},
+  arxivId = {1909.12271}
+}
 
 </script>
 </html>
