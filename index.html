@@ -5,7 +5,7 @@
       display: block;
       margin-left: auto;
       margin-right: auto;
-      width: 50%;
+      width: 99%;
     }
 
 
@@ -51,31 +51,40 @@
      or provide a dense reward metric where latent Euclidean distance is a ‘true’ measure of progress
       towards the goal state. </p>
 
+     <p>I used two testing environments, my own testing environment where the gold point mass must push the red block to a goal positions <dt-fn>https://github.com/sholtodouglas/pointMass</dt-fn> and RLBench <dt-cite key="James2019RLBench"></dt-cite> tasks. </p> 
+
+      <div class="row">
+        <div class="column">
+          <img src="images/demo.gif" alt="Snow" style="width:100%">
+        </div>
+        <div class="column">
+          <img src="images/onthegrill2.png" alt="Forest" style="width:100%">
+        </div>
+      </div>
+
+
+      <p> The image below depicts the intuition of the method, where states or images are transformed to latent representations (here shown in 2D using UMAP) - then 
+        a straight line path gives the correct path when mapped back to the original problem space. 
+      </p>
+
+
 
       <div class="fake-img l-body">
       <figure>
        <img src="images/viz.png" alt="hi" height="50%" class="center" />
-        <figcaption> <b>The yellow point mass must push the red block to a goal position. The straight line between a sample from latent space (visualised in 2D with UMAP) traces out an optimal trajectory through the state space of the task. </b></figcaption>
       </figure>
        
+      <p> Here is the same method applied to a significantly more difficult problem, hallucinating a reasonable trajectory in image space for an unseen arrangement of the BBQ and meat in an RLBench Task. </p>
 
-      <img src="images/hallucination.png" alt="hi" height="150%" class="center"/>
-      <figure>
-       
-         <figcaption> <b> Image space trajectory hallucinated for two camera angles from the interpolated trajectory in latent space for an RLBench Task <dt-cite key="James2019RLBench"></dt-cite> . </b></figcaption>
-       </figure>
+     
+        <img src="images/hallucination.png" width="100%" class="center"/>
       
-      </div>
+     
 
-      <div class="fake-img l-body">
-        <figure>
-         <img src="images/demo.gif" alt="hi" height="50%" class="center" />
-          <figcaption> <b>Clear gif of the yellow point mass continously pushing the block to different goal positions.  </b></figcaption>
-        </figure>
          
 
 
-  <p> Whilst it does display attractive properties as a reward function and hallucinate visually superb sub-goals and trajectories, when used on downstream tasks agents are capable of finding local minima to exploit instead of solving the task. However, I thought it might be of interest that the latent space can be 
+  <p> Whilst it does display attractive properties as a reward function and hallucinate visually superb sub-goals and trajectories, when the representations are used  agents are capable of finding local minima to exploit instead of solving the task. However, I thought it might be of interest that the latent space can be 
     structured in this way - whether as the inspiration for future work, a sign not to pursue this path or just as a curiosity!
 
      <p> If this terminology is familiar, skip to the next section where I’ll outline current
@@ -92,29 +101,29 @@
         when working from images, which are effectively comprised of hundreds of thousands of 
         dimensions. </p>
 
-        <p> Representations are transformations of the input data which make it easier to solve
+        <p> Representations are transformations of the input data into a different vector which make it easier to solve
            downstream tasks. For example, the compressed representations output by the later layers
             of CNNs summarize the high level features of an image. The representations learnt by
              supervised learning on image classification tasks are excellent for transfer learning
-              to other similar tasks, but of limited use for robotic manipulation which
+              to other similar tasks, but are of limited use for robotic manipulation which
                requires different information such as the spatial relationship between objects.
                 These requirements led to adjustments like the spatial softmax  <dt-cite key="end2end"></dt-cite>, which 
                 forces the representation to retain spatial information.  </p> 
-                <p> State representation learning is the study of explicitly engineering representations useful for control of the state in tasks like manipulation. </p>
+                <p> State representation learning is the study of explicitly engineering representations useful for control of the state in downstream tasks like manipulation. </p>
                 <hr>
                 <h2> Themes in the Research</h2>
   
 
-      <p> The first theme is to use the distance between the latent representations of states as a better reward function for reinforcement learning or loss function for imitation learning. This avoids the difficulty of hand designing complex and failure prone dense reward functions, and allows for a better similarity metric between frames. Srinivas et al <dt-cite key="UPN"></dt-cite>learn representations useful for planning and imitating a set of expert 
+      <p> The first theme is to use the distance (typically Euclidean) between the latent representations of states as a better reward function for reinforcement learning or as a loss function for imitation learning. This avoids the difficulty of hand designing complex and failure prone dense reward functions, and allows for a better similarity metric between frames. Srinivas et al <dt-cite key="UPN"></dt-cite>learn representations useful for planning and imitating a set of expert 
         demonstrations while Ghosh et al  <dt-cite key="Ghosh"></dt-cite> use the difference in the actions used to reach 
         states with a pretrained policy as a proxy for distance between states. Both approaches learn a representation for states which enables faster learning of new policies. Sermanet et al   <dt-cite key="Sermanet"></dt-cite> 
          use contrastive losses to build viewpoint invariant representations by drawing frames from
           the same timestep but different viewpoints together. This worked excellently as a
-           distance measure for imitation learning. All these approaches require either a selection of expert trajectories, or a pretrained goal 
-            conditioned policy. </p>
+           distance measure for imitation learning. All these approaches require either a selection of human tele-operated expert trajectories, or a pretrained goal 
+            conditioned policy  to collect expert trajectories with. </p>
 
         <p> The second theme is to use the latent space to make it easier to plan trajectories to
-           reach goal states. This is because it is faster and easier to simulate or optimize in the lower dimensional
+           reach goal states. Typically because it is faster and easier to simulate or optimize in the lower dimensional
             latent space than the original image space – allowing effective sub-goal generation 
             <dt-cite key="NAIR"></dt-cite>, trajectory optimisation via Model Predictive Control 
             <dt-cite key="Ke2019"></dt-cite> or training of RL agents on simulated data <dt-cite key="ha2018worldmodels"></dt-cite>. A particularly interesting paper by Watter et al <dt-cite key="Embed2control"></dt-cite> structure the latent
@@ -168,17 +177,16 @@
          
 
          Earlier, when I tried a
-          separate reconstruction loss and a linearization loss by taking the distance between the encoded
-           latent variables of frames along a trajectory to the line between z<sub>i</sub>, z<sub>g</sub>, it failed to 
+          separate reconstruction loss and a linearization loss by taking the distance between the
+           latent encodings of generated frames along a trajectory to the line between z<sub>i</sub>, z<sub>g</sub>, it failed to 
            work because balancing the weightings of reconstruction and linearization loss was extremely 
-           difficult. Additionally, in order to get it to work on images, content loss had to be used <dt-cite key="Hou2016DeepAutoencoder"></dt-cite>. 
+           difficult. Additionally, in order to get it to work on images, content loss <dt-cite key="Hou2016DeepAutoencoder"></dt-cite> had to be used  in addition to pixelwise 
+           loss as the reconstruction loss. 
         </p>
 
-        <p>To use it to plan trajectories, simply encode the start and end goal, interpolate between 
+        <p>To use it to plan trajectories, simply encode any pair of start and end goal states, interpolate between 
           them and decode along the path. To use it as a reward function, simply encode and take the 
           L2 distance between frames. 
-          In order to get it to work with images, I had to use content loss in addition to pixelwise 
-          loss as the reconstruction loss.
           </p>
 
           <hr>
@@ -269,7 +277,7 @@
          </figure>
          </div>
 
-         <p>Despite this, moving forward spherical interpolation makes significantly more sense because it allows for harmonic motion (where continuing will return the state to the original state) and allows for multiple valid paths between states. </p>
+         <p>Despite this, moving forward, spherical interpolation makes significantly more sense because it allows for harmonic motion (where continuing will return the state to the original state) and allows for multiple valid paths between states. </p>
          
         
          <h3> How Many Dimensions are Required?</h3>
@@ -323,6 +331,8 @@
 </dt-appendix>
 
 <script type="text/bibliography">
+
+
   @article{gregor2015draw,
     title={DRAW: A recurrent neural network for image generation},
     author={Gregor, Karol and Danihelka, Ivo and Graves, Alex and Rezende, Danilo Jimenez and Wierstra, Daan},
@@ -440,6 +450,8 @@
   url = {http://arxiv.org/abs/1909.12271},
   arxivId = {1909.12271}
 }
+
+
 
 </script>
 </html>
