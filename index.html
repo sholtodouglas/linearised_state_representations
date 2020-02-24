@@ -19,9 +19,14 @@
     }
     figure figcaption {
         text-align: center;
-        margin-left: 100px; 
-        margin-right: 100px;
+        margin-left: auto;
+      margin-right: auto;
+
     }
+
+
+
+
 
   </style>
 <meta charset="utf-8">
@@ -46,7 +51,7 @@
   
   <p>Recently I found a way to learn state representations such that linear interpolation between the latent
      representations of states provided near optimal trajectories between the states in the original 
-     set of dimensions. They are learnt by optimising the representations of expert trajectories to lie along lines in latent space. The hard problem of finding the best path between states is reduced to the simple problem of taking a straight line between the latent representations of states - and the complexity is wrapped in the mapping to and from the latent space. This even worked for image based object manipulation tasks, and might be 
+     set of dimensions. They are learnt by optimising the representations of expert trajectories to lie along lines in higher dimensional latent space. The hard problem of finding the best path between states is reduced to the simple problem of taking a straight line between the latent representations of states - and the complexity is wrapped in the mapping to and from the latent space. This even worked for image based object manipulation tasks, and might be 
      an interesting way to approach sub-goal generation for temporally extended manipulation tasks
      or provide a dense reward metric where latent Euclidean distance is a ‘true’ measure of progress
       towards the goal state. </p>
@@ -63,7 +68,7 @@
       </div>
 
 
-      <p> The image below depicts the intuition of the method, where states or images are transformed to latent representations (here shown in 2D using UMAP) - then 
+      <p> The image below depicts the intuition of the method, where states or images are transformed to latent representations (here reduced to 2D using UMAP) - then 
         a straight line path gives the correct path when mapped back to the original problem space. 
       </p>
 
@@ -71,7 +76,7 @@
 
       <div class="fake-img l-body">
       <figure>
-       <img src="images/viz.png" alt="hi" height="50%" class="center" />
+       <img src="images/viz.png" alt="hi"  class="center" height="60%"/>
       </figure>
        
       <p> Here is the same method applied to a significantly more difficult problem, hallucinating a reasonable trajectory in image space for an unseen arrangement of the BBQ and meat in an RLBench Task. </p>
@@ -84,7 +89,7 @@
          
 
 
-  <p> Whilst it does display attractive properties as a reward function and hallucinate visually superb sub-goals and trajectories, when the representations are used  agents are capable of finding local minima to exploit instead of solving the task. However, I thought it might be of interest that the latent space can be 
+  <p> Whilst it does display attractive properties as a reward function and hallucinate visually superb sub-goals and trajectories, when the representations are used  agents are capable of finding local reward minima to exploit instead of solving the task. However, I thought it might be of interest that the latent space can be 
     structured in this way - whether as the inspiration for future work, a sign not to pursue this path or just as a curiosity!
 
      <p> If this terminology is familiar, skip to the next section where I’ll outline current
@@ -109,7 +114,8 @@
                requires different information such as the spatial relationship between objects.
                 These requirements led to adjustments like the spatial softmax  <dt-cite key="end2end"></dt-cite>, which 
                 forces the representation to retain spatial information.  </p> 
-                <p> State representation learning is the study of explicitly engineering representations useful for control of the state in downstream tasks like manipulation. </p>
+                <p> State representation learning is the study of explicitly engineering representations useful for control of the state in downstream tasks like manipulation. This often involves generative models
+                  such as Variational Autoencoders, which are comprehensively explained at Lil'Log <dt-cite key="lillog"></dt-cite> </p>
                 <hr>
                 <h2> Themes in the Research</h2>
   
@@ -171,7 +177,7 @@
            <figcaption> <b> Interpolation between latent transformations mapped back to state space showing a valid trajectory. </b></figcaption>
          </figure>
          </div>
-
+         
         <p>
          
          
@@ -237,7 +243,7 @@
         <div class="fake-img l-body">
          
          <figure width="300px">
-           <figcaption> <b>   For a sample of expert trajectories, each in a different color, the latent distance between the embedding of each frame with the goal with our autoencoder, a standard autoencoder, and the pixel-wise distance between the original frame and the goal image is compared from left to right. </b></figcaption>
+           <figcaption> <b>   For a sample of expert trajectories, each in a different color, the latent distance between the embedding of each frame with the goal with an autoencoder with linearised latent space, a standard autoencoder, and the pixel-wise distance between the original frame and the goal image is compared from left to right. </b></figcaption>
          </figure>
          </div>
         
@@ -267,7 +273,7 @@
          
         <p> I tested this and found that using spherical interpolation was only roughly as successful as linear interpolation. I hypothesized that when using linear interpolation, the method of jointly optimizing for reconstruction and interpolation spreads mass throughout the entire hypersphere - which means spherical interpolation was unnecessary. 
          I tested this on the 64 dimensional encodings of images by sampling a batch of trajectories, calculating their vector magnitudes and centering them about the average vector magnitude. This gave an approximately normal distribution of values, indicating that the method spreads the
-         density throughout the space normally instead of in a thin shell and thus linear interpolation is valid. 
+         density throughout the space normally instead of in a thin shell and thus linear interpolation is valid.
         </p>
          
         
@@ -277,7 +283,7 @@
          </figure>
          </div>
 
-         <p>Despite this, moving forward, spherical interpolation makes significantly more sense because it allows for harmonic motion (where continuing will return the state to the original state) and allows for multiple valid paths between states. </p>
+         <p>Moving forward, spherical interpolation makes significantly more sense because it allows for harmonic motion (where continuing will return the state to the original state) and allows for multimodal paths between states. </p>
          
         
          <h3> How Many Dimensions are Required?</h3>
@@ -309,7 +315,7 @@
 
            <h2> Algorithm and Architecture Specifics</h2>
 
-           <p> Here is a more detailed breakdown of the training process. You can also find the (very messy) code here with architecture details. </p>
+           <p> Here is a more detailed breakdown of the training process. You can also find the (messy) code in the repo <dt-fn> https://github.com/sholtodouglas/linearised_state_representations </dt-fn> with architecture details. </p>
 
            <img src="images/algo.png" alt="hi" class="center"/>
           <div class="fake-img l-body">
@@ -331,6 +337,7 @@
 </dt-appendix>
 
 <script type="text/bibliography">
+
 
 
   @article{gregor2015draw,
@@ -449,6 +456,13 @@
   publisher = {Imperial College},
   url = {http://arxiv.org/abs/1909.12271},
   arxivId = {1909.12271}
+}
+
+@misc{lillog,
+  title = {From Autoencoder to Beta-VAE},
+  year = {2018},
+  author = {Lilian Weng},
+  url = {https://lilianweng.github.io/lil-log/2018/08/12/from-autoencoder-to-beta-vae.html}
 }
 
 
